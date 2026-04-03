@@ -376,7 +376,11 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
 
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
-        return getCredentialProvider(session).isConfiguredFor(realm, user, getType(session));
+        boolean hasCredential = user.credentialManager()
+                .getStoredCredentialsByTypeStream(EmailAuthenticatorCredentialModel.TYPE_ID)
+                .findAny()
+                .isPresent();
+        return hasCredential && user.isEmailVerified();
     }
 
     @Override

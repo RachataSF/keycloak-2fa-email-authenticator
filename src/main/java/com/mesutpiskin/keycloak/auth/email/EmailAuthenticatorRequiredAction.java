@@ -58,8 +58,7 @@ public class EmailAuthenticatorRequiredAction implements RequiredActionProvider,
                     .createForm(SETUP_TEMPLATE));
             return;
         }
-
-        context.challenge(context.form().createForm(SETUP_TEMPLATE));
+        generateAndSendSetupCode(context);
     }
 
     @Override
@@ -133,6 +132,7 @@ public class EmailAuthenticatorRequiredAction implements RequiredActionProvider,
                 try {
                     user.credentialManager().createStoredCredential(credential);
                     user.removeRequiredAction(PROVIDER_ID);
+                    user.setEmailVerified(true);
                     context.success();
                 } catch (RuntimeException ex) {
                     logger.errorf(ex, "Failed to persist email authenticator credential for user %s", user.getId());
