@@ -52,13 +52,17 @@ public class EmailAuthenticatorRequiredAction implements RequiredActionProvider,
 
     @Override
     public void requiredActionChallenge(RequiredActionContext context) {
-        if (userMissingEmail(context.getUser())) {
-            context.challenge(context.form()
-                    .setError("email-authenticator-setup-missing-email")
-                    .createForm(SETUP_TEMPLATE));
-            return;
-        }
-        generateAndSendSetupCode(context);
+        // if (userMissingEmail(context.getUser())) {
+        // context.challenge(context.form()
+        // .setError("email-authenticator-setup-missing-email")
+        // .createForm(SETUP_TEMPLATE));
+        // return;
+        // }
+        // context.challenge(context.form().createForm(SETUP_TEMPLATE));
+
+        UserModel user = context.getUser();
+        user.removeRequiredAction(PROVIDER_ID);
+        context.success();
     }
 
     @Override
@@ -72,7 +76,9 @@ public class EmailAuthenticatorRequiredAction implements RequiredActionProvider,
             if (session.getAuthNote(EmailConstants.CODE) != null) {
                 // OTP was sent — cancel goes back to setup form
                 resetSetupCode(session);
+                // uncomment for turn on enable OTP to email
                 requiredActionChallenge(context);
+                // context.failure();
                 return;
             }
             // No OTP sent yet — handle cancel-aia for app-initiated actions
@@ -132,7 +138,6 @@ public class EmailAuthenticatorRequiredAction implements RequiredActionProvider,
                 try {
                     user.credentialManager().createStoredCredential(credential);
                     user.removeRequiredAction(PROVIDER_ID);
-                    user.setEmailVerified(true);
                     context.success();
                 } catch (RuntimeException ex) {
                     logger.errorf(ex, "Failed to persist email authenticator credential for user %s", user.getId());

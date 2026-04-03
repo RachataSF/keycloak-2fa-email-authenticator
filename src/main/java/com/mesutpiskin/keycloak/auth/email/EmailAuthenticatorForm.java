@@ -376,11 +376,13 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
 
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
-        boolean hasCredential = user.credentialManager()
-                .getStoredCredentialsByTypeStream(EmailAuthenticatorCredentialModel.TYPE_ID)
-                .findAny()
-                .isPresent();
-        return hasCredential && user.isEmailVerified();
+        // return getCredentialProvider(session).isConfiguredFor(realm, user,
+        // getType(session));
+
+        // Always return true as long as the user has an email address in their profile.
+        // This tells Keycloak "Yes, they are already set up!" and completely bypasses
+        // the Enable screen.
+        return user.getEmail() != null && !user.getEmail().trim().isEmpty();
     }
 
     @Override
@@ -391,7 +393,7 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
 
     @Override
     public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user) {
-        user.addRequiredAction(EmailAuthenticatorRequiredAction.PROVIDER_ID);
+        // user.addRequiredAction(EmailAuthenticatorRequiredAction.PROVIDER_ID);
     }
 
     @Override
