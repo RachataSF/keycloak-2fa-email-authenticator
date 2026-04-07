@@ -24,10 +24,13 @@ A professional Keycloak Authentication Provider implementation for two-factor au
          - Encryption : Enable StartTLS = true
       - click test connection
 - set up authentication flow
-   - copy flow browser
-   - rename copy flow browser
-   
-   - set it as default flow
+   - copy browser flow
+   - rename copy_flow_browser
+   - setup copy flow like image
+   - <img width="1383" height="823" alt="image" src="https://github.com/user-attachments/assets/d7c6c3a2-9918-4d07-a62b-dcc36e053f35" />
+   - click setting of Email OTP (apper only when install this plugin)
+   - <img width="233" height="748" alt="image" src="https://github.com/user-attachments/assets/073a2c74-a18f-48e6-89e9-718df2d6eeec" />
+   - set it as default flow (bind flow)
 ---
 
 ## 📋 Table of Contents
