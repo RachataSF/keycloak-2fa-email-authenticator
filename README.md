@@ -8,6 +8,27 @@ A professional Keycloak Authentication Provider implementation for two-factor au
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 
 ---
+## implement with new iFims
+- deploy validateEmail api (bound checker microservice) to tomcat & nginx
+- install this keycloak plugin by put .jar in /keycloak/providers/
+- setup keycloak
+   - set up keycloak admin email
+   - set up Realm setting at email tab
+      - from : noreplySFIS007@gmail.com
+      - from display name : email title text (ex. Login Authentication)
+      - Connection & Authentication
+         - host : smtp.gmail.com
+         - port : 587
+         - username : noreplySFIS007@gmail.com
+         - password : [gmail_application_password]
+         - Encryption : Enable StartTLS = true
+      - click test connection
+- set up authentication flow
+   - copy flow browser
+   - rename copy flow browser
+   
+   - set it as default flow
+---
 
 ## 📋 Table of Contents
 

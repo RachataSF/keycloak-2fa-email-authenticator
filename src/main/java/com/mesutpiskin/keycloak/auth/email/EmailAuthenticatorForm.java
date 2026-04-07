@@ -91,6 +91,7 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
     protected Response challenge(AuthenticationFlowContext context, String error, String field) {
         generateAndSendEmailCode(context);
         LoginFormsProvider form = prepareForm(context, null);
+        form.setAttribute("attemptedUserEmail", context.getUser().getEmail());
         applyFormMessage(form, error, field);
         return form.createForm("email-code-form.ftl");
     }
