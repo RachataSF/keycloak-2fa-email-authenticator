@@ -6,9 +6,14 @@
             <#elseif section="form">
                 <style>
                     /* Custom Corporate Styling */
+                    html,
                     body {
-                        background-color: #111111;
-                        /* fallback if no background image */
+                        background-image: none !important;
+                        background-attachment: unset !important;
+                    }
+
+                    body {
+                        background: linear-gradient(135deg, #075985 0%, #0ea5e9 100%) !important;
                         display: flex !important;
                         flex-direction: column !important;
                         justify-content: center !important;
@@ -29,6 +34,8 @@
                         display: block;
                         text-align: left;
                         font-size: 0.8rem !important;
+                        margin-bottom: 5px !important;
+                        margin-top: 15px !important;
                         /* text-lg */
                     }
 
@@ -36,8 +43,8 @@
                     input[type="submit"].btn-primary,
                     .btn-primary,
                     .kcButtonClass {
-                        background-color: #E10074 !important;
-                        border-color: #E10074 !important;
+                        background-color: #0ea5e9 !important;
+                        border-color: #0ea5e9 !important;
                         color: #ffffff !important;
                         border-radius: 0.75rem !important;
                         /* rounded-xl */
@@ -46,6 +53,7 @@
                         width: auto !important;
                         box-sizing: border-box !important;
                         font-size: 1rem !important;
+                        margin-top: 10px !important;
                         /* text-lg */
                     }
 
@@ -53,24 +61,25 @@
                     input[type="submit"].btn-primary:hover,
                     .btn-primary:hover,
                     a.kcButtonClass:hover {
-                        background-color: #b3005c !important;
-                        border-color: #b3005c !important;
+                        background-color: #075985 !important;
+                        border-color: #075985 !important;
                         color: #ffffff !important;
                     }
 
                     a,
                     .kc-link {
-                        color: #E10074 !important;
+                        color: #0ea5e9 !important;
                     }
 
                     a:hover,
                     .kc-link:hover {
-                        color: #b3005c !important;
+                        color: #075985 !important;
                     }
 
                     .pf-c-form-control,
                     input[type="text"],
                     input[type="password"] {
+                        background: rgba(255, 255, 255, 0.5) !important;
                         border-color: #757575 !important;
                         color: #757575 !important;
                         border-radius: 0.75rem !important;
@@ -84,9 +93,28 @@
                     .pf-c-form-control:focus,
                     input[type="text"]:focus,
                     input[type="password"]:focus {
-                        border-color: #E10074 !important;
-                        box-shadow: 0 0 0 1px #E10074 !important;
+                        border-color: #0ea5e9 !important;
+                        box-shadow: 0 0 0 1px #0ea5e9 !important;
                         outline: none !important;
+                    }
+
+                    /* Error state: red border on invalid inputs */
+                    input[aria-invalid="true"],
+                    .pf-c-form-control[aria-invalid="true"] {
+                        border-color: #e53935 !important;
+                        box-shadow: 0 0 0 1px #e53935 !important;
+                    }
+
+                    /* Error message text */
+                    #input-error,
+                    .pf-c-form__helper-text--error,
+                    .kcInputErrorMessageClass {
+                        color: #e53935 !important;
+                        font-size: 0.85rem !important;
+                        font-weight: 500 !important;
+                        margin-top: 4px !important;
+                        display: block !important;
+                        padding-left: 15px !important;
                     }
 
                     /* Layout & Sizing Fixes */
@@ -94,11 +122,12 @@
                     .kc-form-card {
                         width: 60vh !important;
                         max-width: 90vw !important;
-                        /* Prevents overflow on narrow screens */
                         margin: 0 auto !important;
-                        border-radius: 1rem !important;
-                        padding: 2rem !important;
-                        background-color: #ffffff !important;
+                        border-radius: 3rem !important;
+                        padding: 3rem !important;
+                        background-color: rgba(255, 255, 255, 0.8) !important;
+                        border: 7px solid #9adafd !important;
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
                     }
 
                     #kc-form {
@@ -134,6 +163,10 @@
                         width: 100%;
                     }
 
+                    #kc-login-text {
+                        font-weight: 600;
+                    }
+
                     @keyframes spin {
                         from {
                             transform: rotate(0deg);
@@ -146,6 +179,34 @@
                 </style>
 
                 <div id="kc-form">
+                    <!-- Sending Access Code Overlay (hidden until login clicked) -->
+                    <div id="login-sending-overlay" style="display: none; text-align: center; padding: 30px 0;">
+                        <div style="display: inline-block; margin-bottom: 16px;">
+                            <svg style="width: 48px; height: 48px; animation: spin 1s linear infinite; color: #0ea5e9;"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path style="opacity: 0.75;" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                        </div>
+                        <!-- <p id="login-sending-text"
+                            style="font-size: 1.2em; color: #555; font-weight: bold; margin-top: 10px;">Sending access
+                            code.</p> -->
+                    </div>
+                    <!-- <script>
+                        (function () {
+                            var dots = 1;
+                            var el = document.getElementById('login-sending-text');
+                            if (el) {
+                                setInterval(function () {
+                                    dots = (dots % 5) + 1;
+                                    el.textContent = 'Sending access code' + '.'.repeat(dots);
+                                }, 500);
+                            }
+                        })();
+                    </script> -->
                     <div id="kc-form-wrapper">
                         <#if realm.password>
                             <form id="kc-form-login" onsubmit="return handleLoginSubmit();" action="${url.loginAction}"
@@ -241,23 +302,12 @@
                             </form>
                             <script>
                                 function handleLoginSubmit() {
-                                    const btn = document.getElementById('kc-login');
-                                    const text = document.getElementById('kc-login-text');
-                                    const spinner = document.getElementById('kc-login-spinner');
-                                    const loginIcon = document.getElementById('kc-login-icon');
-                                    // const usernameInput = document.getElementById('username');
-                                    // const passwordInput = document.getElementById('password');
-
-                                    btn.disabled = true;
-                                    btn.style.opacity = '0.8';
-                                    btn.style.cursor = 'not-allowed';
-                                    text.innerText = 'Logining...';
-                                    spinner.style.display = 'inline-block';
-                                    loginIcon.style.display = 'none';
-                                    // usernameInput.disabled = true;
-                                    // usernameInput.style.opacity = '0.8';
-                                    // passwordInput.disabled = true;
-                                    // passwordInput.style.opacity = '0.8';
+                                    // Hide the login form, show sending overlay
+                                    document.getElementById('kc-form-wrapper').style.display = 'none';
+                                    document.getElementById('login-sending-overlay').style.display = 'block';
+                                    // Hide page title
+                                    const pageTitle = document.getElementById('kc-page-title');
+                                    if (pageTitle) pageTitle.style.display = 'none';
                                     // Submit normally
                                     return true;
                                 }

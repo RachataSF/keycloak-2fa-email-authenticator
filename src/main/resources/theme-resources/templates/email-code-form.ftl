@@ -8,9 +8,14 @@
 
                     <style>
                         /* Custom Corporate Styling */
+                        html,
                         body {
-                            background-color: #111111;
-                            /* fallback if no background image */
+                            background-image: none !important;
+                            background-attachment: unset !important;
+                        }
+
+                        body {
+                            background: linear-gradient(135deg, #075985 0%, #0ea5e9 100%) !important;
                             display: flex !important;
                             flex-direction: column !important;
                             justify-content: center !important;
@@ -26,11 +31,13 @@
                         .pf-c-form__label,
                         .kcLabelClass,
                         label {
-                            color: #757575 !important;
+                            color: #5e5d5d !important;
                             padding-left: 15px !important;
                             display: block;
-                            text-align: left;
-                            font-size: 0.8rem !important;
+                            text-align: center;
+                            font-size: 1.25rem !important;
+                            font-weight: bold;
+                            margin-bottom: 20px;
                             /* text-lg */
                         }
 
@@ -38,8 +45,8 @@
                         input[type="submit"].btn-primary,
                         .btn-primary,
                         .kcButtonClass {
-                            background-color: #E10074 !important;
-                            border-color: #E10074 !important;
+                            background-color: #0ea5e9 !important;
+                            border-color: #0ea5e9 !important;
                             color: #ffffff !important;
                             border-radius: 0.75rem !important;
                             /* rounded-xl */
@@ -56,38 +63,39 @@
                         input[type="submit"].btn-primary:hover,
                         .btn-primary:hover,
                         a.kcButtonClass:hover {
-                            background-color: #b3005c !important;
-                            border-color: #b3005c !important;
+                            background-color: #075985 !important;
+                            border-color: #075985 !important;
                             color: #ffffff !important;
                         }
 
                         input[name="resend"],
                         input[name="cancel"] {
-                            background-color: #f089be !important;
-                            border-color: #f089be !important;
-                            color: #E10074 !important;
+                            background-color: #7dd3fc !important;
+                            border-color: #7dd3fc !important;
+                            color: #0ea5e9 !important;
                         }
 
                         input[name="resend"]:hover,
                         input[name="cancel"]:hover {
-                            background-color: #E10074 !important;
-                            border-color: #E10074 !important;
+                            background-color: #0ea5e9 !important;
+                            border-color: #0ea5e9 !important;
                             color: #ffffff !important;
                         }
 
                         a,
                         .kc-link {
-                            color: #E10074 !important;
+                            color: #0ea5e9 !important;
                         }
 
                         a:hover,
                         .kc-link:hover {
-                            color: #b3005c !important;
+                            color: #075985 !important;
                         }
 
                         .pf-c-form-control,
                         input[type="text"],
                         input[type="password"] {
+                            background: rgba(255, 255, 255, 0.5) !important;
                             border-color: #757575 !important;
                             color: #757575 !important;
                             border-radius: 0.75rem !important;
@@ -101,8 +109,8 @@
                         .pf-c-form-control:focus,
                         input[type="text"]:focus,
                         input[type="password"]:focus {
-                            border-color: #E10074 !important;
-                            box-shadow: 0 0 0 1px #E10074 !important;
+                            border-color: #0ea5e9 !important;
+                            box-shadow: 0 0 0 1px #0ea5e9 !important;
                             outline: none !important;
                         }
 
@@ -111,11 +119,12 @@
                         .kc-form-card {
                             width: 60vh !important;
                             max-width: 90vw !important;
-                            /* Prevents overflow on narrow screens */
                             margin: 0 auto !important;
-                            border-radius: 1rem !important;
-                            padding: 2rem !important;
-                            background-color: #ffffff !important;
+                            border-radius: 3rem !important;
+                            padding: 3rem !important;
+                            background-color: rgba(255, 255, 255, 0.8) !important;
+                            border: 7px solid #9adafd !important;
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
                         }
 
                         #kc-form {
@@ -147,10 +156,10 @@
 
                         #kc-form-buttons,
                         .pf-c-form__actions {
-                            margin-top: 30px !important;
+                            margin-top: 20px !important;
                             display: flex !important;
                             justify-content: center !important;
-                            gap: 10px;
+                            gap: 25px;
                             width: 100%;
                         }
 
@@ -168,40 +177,15 @@
                             opacity: 0.7 !important;
                         }
 
-                        /* Username & Restart Login adjustments */
+                        /* Username & Restart Login — hidden */
                         #kc-username {
-                            display: flex !important;
-                            flex-direction: column !important;
-                            align-items: center !important;
-                            text-align: center !important;
-                        }
-
-                        #kc-attempted-username {
-                            font-size: 1.125rem !important;
-                            /* text-lg */
-                            color: #757575 !important;
-                            font-weight: 500 !important;
-                            margin-bottom: 5px !important;
-                        }
-
-                        #reset-login {
-                            font-size: 1.125rem !important;
-                            /* text-lg */
-                            color: #E10074 !important;
-                            display: flex !important;
-                            align-items: center !important;
-                            gap: 5px !important;
-                            text-decoration: none !important;
-                        }
-
-                        #reset-login:hover {
-                            color: #b3005c !important;
+                            display: none !important;
                         }
 
                         /* SVG Envelope matches primary color */
                         svg#ee13b174-13f0-43ea-b921-f168b1054f8d {
-                            fill: #E10074 !important;
-                            stroke: #E10074 !important;
+                            fill: #0ea5e9 !important;
+                            stroke: #0ea5e9 !important;
                         }
                     </style>
 
@@ -255,21 +239,24 @@
                                 </g>
                             </svg>
                         </div>
-                        <p style="font-size: 1.2em; color: #555; font-weight: bold; margin-top: 10px;">Sending access
-                            code</p>
+                        <p id="otp-sending-text"
+                            style="font-size: 1.2em; color: #555; font-weight: bold; margin-top: 10px;">Sending access
+                            code.</p>
                     </div>
 
                     <!-- Bounce Error Container (Hidden by default) -->
                     <div id="bounce-error-container" class="${properties.kcFormGroupClass!}"
                         style="display: none; text-align: center; margin-bottom: 20px;">
                         <span class="${properties.kcInputErrorMessageClass!}"
-                            style="color: red; font-weight: bold; font-size: 1.1em; display: block; margin-bottom: 10px;">
-                            Failed to send access code!<br> Email address could not be found or is unable to receive
-                            mail.
+                            style="color: red; font-weight: bold; font-size: 1.5em; display: block; margin-bottom: 5px;">
+                            Failed to send access code!</span>
+                        <span class="${properties.kcInputErrorMessageClass!}"
+                            style="color: red; font-size: 1.2em; display: block; margin-bottom: 10px;">
+                            Email address could not be found.
                         </span>
                         <a href="${url.loginRestartFlowUrl}"
                             class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}"
-                            style="text-decoration: none;">
+                            style="text-decoration: none; margin-top: 20px; font-weight:600;">
                             Try Again
                         </a>
                     </div>
@@ -311,10 +298,10 @@
                             class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}"
                             name="login" type="submit" value="${msg('doLogIn')}" />
                     </#if>
-                    <input id="kc-resend-btn"
+                    <input id="kc-resend-btn" style="margin-left: 15px;"
                         class="${properties.kcButtonClass!} <#if maxAttemptsReached?? && maxAttemptsReached>${properties.kcButtonPrimaryClass!}<#else>${properties.kcButtonDefaultClass!}</#if> ${properties.kcButtonLargeClass!}"
                         name="resend" type="submit" value="${msg('resendCode')}" />
-                    <input
+                    <input style="margin-left: 15px;"
                         class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                         name="cancel" type="submit" value="${msg('doCancel')}" />
                 </div>
@@ -328,6 +315,18 @@
             let pollInterval;
             let pollAttempts = 0;
             const maxAttempts = 3; // Wait up to 9 seconds (3 * 3s)
+
+            /* ---- Dots animation for sending text ---- */
+            (function () {
+                var dots = 1;
+                var el = document.getElementById('otp-sending-text');
+                if (el) {
+                    setInterval(function () {
+                        dots = (dots % 5) + 1;
+                        el.textContent = 'Sending access code' + '.'.repeat(dots);
+                    }, 500);
+                }
+            })();
 
             /* ---- Resend Cooldown (30 seconds) ---- */
             const COOLDOWN_SEC = 30;
@@ -384,6 +383,11 @@
                 if (resendBtn) {
                     resendBtn.addEventListener('click', function () {
                         sessionStorage.setItem(COOLDOWN_KEY, String(Date.now()));
+                        // Tiny delay so the browser still sends the 'resend' value in the POST request
+                        setTimeout(() => {
+                            resendBtn.disabled = true;
+                            // resendBtn.value = 'Sending...';
+                        }, 10);
                     });
                 }
             });
