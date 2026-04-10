@@ -23,18 +23,22 @@ import org.keycloak.credential.CredentialProvider;
 import org.jboss.logging.Logger;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Keycloak authenticator that implements two-factor authentication via email.
+ * Keycloak authenticator that implements two-factor authentication via email or
+ * SMS.
  * <p>
  * This authenticator generates a one-time password (OTP) and sends it to the
- * user's
- * registered email address. The user must enter the received code to complete
- * authentication.
+ * user's registered email address or phone number. The user can choose their
+ * preferred delivery method when SMS is enabled.
  * </p>
  * <p>
  * Features include:
@@ -44,6 +48,8 @@ import java.util.Map;
  * <li>Simulation mode for testing without sending actual emails</li>
  * <li>Brute force protection support</li>
  * <li>Code expiration handling</li>
+ * <li>SMS delivery via configurable HTTP gateway</li>
+ * <li>Method selection (email or SMS) when SMS is enabled</li>
  * </ul>
  * </p>
  *
@@ -58,28 +64,54 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
     private static final String CODE_ATTEMPTS = "emailCodeAttempts";
 
     /**
-     * Initiates the authentication process by presenting the email OTP challenge to
-     * the user.
-     * <p>
-     * This method is called by Keycloak when the user reaches this authenticator in
-     * the flow.
-     * It generates and sends an email code, then displays the form for code entry.
-     * </p>
+     * Initiates the authentication process by presenting either the method
+     * selection
+     * screen (if SMS is enabled) or directly sending the email code.
      *
      * @param context the authentication flow context containing user, session, and
      *                realm information
      */
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        context.challenge(challenge(context, null));
+        AuthenticatorConfigModel config = context.getAuthenticatorConfig();
+        Map<String, String> configValues = config != null && config.getConfig() != null
+                ? config.getConfig()
+                : Map.of();
+
+        boolean smsEnabled = Boolean.parseBoolean(
+                configValues.getOrDefault(EmailConstants.SMS_ENABLED,
+                        String.valueOf(EmailConstants.DEFAULT_SMS_ENABLED)));
+
+        String phoneAttribute = configValues.getOrDefault(
+                EmailConstants.SMS_PHONE_ATTRIBUTE,
+                EmailConstants.DEFAULT_SMS_PHONE_ATTRIBUTE);
+
+        UserModel user = context.getUser();
+        String userPhone = getUserPhone(user, phoneAttribute);
+        boolean userHasPhone = userPhone != null && !userPhone.trim().isEmpty();
+
+        if (smsEnabled && userHasPhone) {
+            // Show method selection screen
+            LoginFormsProvider form = context.form().setExecution(context.getExecution().getId());
+            form.setAttribute("attemptedUserEmail", user.getEmail());
+            form.setAttribute("smsEnabled", true);
+            form.setAttribute("userHasPhone", true);
+            form.setAttribute("showMethodSelection", true);
+            // Mask phone for display
+            form.setAttribute("maskedPhone", maskPhone(userPhone));
+            form.setAttribute("maskedEmail", maskEmail(user.getEmail()));
+            context.challenge(form.createForm("email-code-form.ftl"));
+        } else {
+            // SMS not available, go directly to email flow (backward compatible)
+            context.challenge(challenge(context, null));
+        }
     }
 
     /**
      * Creates the authentication challenge response with the email code entry form.
      * <p>
      * Generates and sends the email code if not already sent, prepares the form
-     * with
-     * any error messages, and returns the rendered form response.
+     * with any error messages, and returns the rendered form response.
      * </p>
      *
      * @param context the authentication flow context
@@ -89,36 +121,33 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
      */
     @Override
     protected Response challenge(AuthenticationFlowContext context, String error, String field) {
-        generateAndSendEmailCode(context);
+        AuthenticationSessionModel session = context.getAuthenticationSession();
+        String deliveryMethod = session.getAuthNote(EmailConstants.DELIVERY_METHOD);
+
+        if (deliveryMethod == null) {
+            deliveryMethod = EmailConstants.METHOD_EMAIL;
+        }
+
+        generateAndSendCode(context, deliveryMethod);
         LoginFormsProvider form = prepareForm(context, null);
         form.setAttribute("attemptedUserEmail", context.getUser().getEmail());
+        form.setAttribute("deliveryMethod", deliveryMethod);
         applyFormMessage(form, error, field);
         return form.createForm("email-code-form.ftl");
     }
 
     /**
-     * Generates a random email code and sends it to the user's registered email
-     * address.
-     * <p>
-     * If a code has already been generated for this session, this method returns
-     * early
-     * to prevent duplicate emails. The code is stored in the authentication session
-     * along
-     * with its expiration time and resend cooldown period.
-     * </p>
-     * <p>
-     * In simulation mode, the code is logged instead of being emailed, useful for
-     * development.
-     * </p>
+     * Generates a random code and sends it via the specified delivery method.
      *
-     * @param context the authentication flow context
+     * @param context        the authentication flow context
+     * @param deliveryMethod "email" or "sms"
      */
-    private void generateAndSendEmailCode(AuthenticationFlowContext context) {
+    private void generateAndSendCode(AuthenticationFlowContext context, String deliveryMethod) {
         AuthenticatorConfigModel config = context.getAuthenticatorConfig();
         AuthenticationSessionModel session = context.getAuthenticationSession();
 
         if (session.getAuthNote(EmailConstants.CODE) != null) {
-            // skip sending email code
+            // skip sending code
             return;
         }
 
@@ -133,8 +162,10 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
 
         String code = SecretGenerator.getInstance().randomString(length, SecretGenerator.DIGITS);
         if (config != null && Boolean.parseBoolean(config.getConfig().get(EmailConstants.SIMULATION_MODE))) {
-            logger.infof("***** SIMULATION MODE ***** Email code send to %s for user %s is: %s",
-                    context.getUser().getEmail(), context.getUser().getUsername(), code);
+            logger.infof("***** SIMULATION MODE ***** Code for user %s is: %s (method: %s)",
+                    context.getUser().getUsername(), code, deliveryMethod);
+        } else if (EmailConstants.METHOD_SMS.equals(deliveryMethod)) {
+            sendSmsWithCode(context, code, ttl);
         } else {
             sendEmailWithCode(context, code, ttl);
         }
@@ -146,12 +177,6 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
 
     /**
      * Resolves a positive integer configuration value with validation and fallback.
-     * <p>
-     * Parses the configuration value for the given key. If the value is missing,
-     * blank,
-     * not a valid integer, or non-positive, returns the default value and logs a
-     * warning.
-     * </p>
      *
      * @param configValues the configuration map
      * @param key          the configuration key to resolve
@@ -182,7 +207,8 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
      * Processes the form submission when the user enters the email code.
      * <p>
      * Validates the submitted code against the stored code, checking for expiration
-     * and correctness. Handles special form actions like "resend" and "cancel".
+     * and correctness. Handles special form actions like "resend", "cancel", and
+     * "selectMethod".
      * On successful validation, marks the authentication as successful.
      * </p>
      *
@@ -197,6 +223,27 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
         }
 
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+
+        // Handle method selection
+        if (formData.containsKey("selectMethod")) {
+            String selectedMethod = formData.getFirst("deliveryMethod");
+            if (selectedMethod == null || selectedMethod.isBlank()) {
+                selectedMethod = EmailConstants.METHOD_EMAIL;
+            }
+            // Validate the method
+            if (!EmailConstants.METHOD_EMAIL.equals(selectedMethod)
+                    && !EmailConstants.METHOD_SMS.equals(selectedMethod)) {
+                selectedMethod = EmailConstants.METHOD_EMAIL;
+            }
+
+            AuthenticationSessionModel session = context.getAuthenticationSession();
+            session.setAuthNote(EmailConstants.DELIVERY_METHOD, selectedMethod);
+
+            // Now generate and send code via chosen method
+            context.challenge(challenge(context, null));
+            return;
+        }
+
         if (handleFormShortcuts(context, formData)) {
             return;
         }
@@ -213,6 +260,9 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
             Long remainingSeconds = getRemainingSeconds(session);
             if (remainingSeconds != null && remainingSeconds > 0L) {
                 LoginFormsProvider form = prepareForm(context, remainingSeconds);
+                String deliveryMethod = session.getAuthNote(EmailConstants.DELIVERY_METHOD);
+                form.setAttribute("deliveryMethod",
+                        deliveryMethod != null ? deliveryMethod : EmailConstants.METHOD_EMAIL);
                 applyFormMessage(form, "email-authenticator-resend-cooldown", null, remainingSeconds);
                 context.challenge(form.createForm("email-code-form.ftl"));
                 return true;
@@ -354,6 +404,7 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
         session.removeAuthNote(EmailConstants.CODE_TTL);
         session.removeAuthNote(EmailConstants.CODE_RESEND_AVAILABLE_AFTER);
         session.removeAuthNote(CODE_ATTEMPTS);
+        session.removeAuthNote(EmailConstants.DELIVERY_METHOD);
     }
 
     private int incrementAttempts(AuthenticationSessionModel session) {
@@ -377,9 +428,6 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
 
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
-        // return getCredentialProvider(session).isConfiguredFor(realm, user,
-        // getType(session));
-
         // Always return true as long as the user has an email address in their profile.
         // This tells Keycloak "Yes, they are already set up!" and completely bypasses
         // the Enable screen.
@@ -406,6 +454,144 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
     @Override
     public void close() {
         // NOOP
+    }
+
+    /**
+     * Gets the user's phone number from a configurable user attribute.
+     *
+     * @param user           the user model
+     * @param phoneAttribute the attribute name storing the phone number
+     * @return the phone number or null if not set
+     */
+    private String getUserPhone(UserModel user, String phoneAttribute) {
+        List<String> phones = user.getAttributes().get(phoneAttribute);
+        if (phones != null && !phones.isEmpty()) {
+            return phones.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * Masks a phone number for display, showing only last 4 digits.
+     * Example: +66812345678 → ****5678
+     */
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() <= 4)
+            return phone;
+        return "****" + phone.substring(phone.length() - 4);
+    }
+
+    /**
+     * Masks an email for display.
+     * Example: user@example.com → u***@example.com
+     */
+    private String maskEmail(String email) {
+        if (email == null)
+            return null;
+        int atPos = email.indexOf('@');
+        if (atPos <= 1)
+            return email;
+        return email.charAt(0) + "***" + email.substring(atPos);
+    }
+
+    /**
+     * Sends an OTP code via SMS using the configured HTTP SMS gateway.
+     *
+     * @param context the authentication flow context
+     * @param code    the OTP code to send
+     * @param ttl     the code TTL in seconds
+     */
+    private void sendSmsWithCode(AuthenticationFlowContext context, String code, int ttl) {
+        AuthenticatorConfigModel config = context.getAuthenticatorConfig();
+        Map<String, String> configValues = config != null && config.getConfig() != null
+                ? config.getConfig()
+                : Map.of();
+
+        String apiUrl = configValues.get(EmailConstants.SMS_API_URL);
+        String apiKey = configValues.get(EmailConstants.SMS_API_KEY);
+        String apiSecret = configValues.get(EmailConstants.SMS_API_SECRET);
+        String senderId = configValues.get(EmailConstants.SMS_SENDER_ID);
+        String phoneAttribute = configValues.getOrDefault(
+                EmailConstants.SMS_PHONE_ATTRIBUTE,
+                EmailConstants.DEFAULT_SMS_PHONE_ATTRIBUTE);
+
+        UserModel user = context.getUser();
+        String phoneNumber = getUserPhone(user, phoneAttribute);
+
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            logger.warnf("Could not send SMS: no phone number for user %s", user.getUsername());
+            throw new AuthenticationFlowException(AuthenticationFlowError.INVALID_USER);
+        }
+
+        if (apiUrl == null || apiUrl.trim().isEmpty()) {
+            logger.errorf("SMS API URL is not configured");
+            throw new AuthenticationFlowException(AuthenticationFlowError.INTERNAL_ERROR);
+        }
+
+        RealmModel realm = context.getRealm();
+        String realmName = realm.getDisplayName() != null ? realm.getDisplayName() : realm.getName();
+
+        // Clean phone number: ThaiBulkSMS often prefers numbers without '+' (e.g.,
+        // 66812345678)
+        String cleanPhone = phoneNumber.startsWith("+") ? phoneNumber.substring(1) : phoneNumber;
+
+        // Build Form Data payload (x-www-form-urlencoded) for ThaiBulkSMS
+        String messageText = realmName + " access code: " + code + ". Valid for " + ttl + " seconds.";
+        String urlParameters = String.format(
+                "msisdn=%s&message=%s&sender=%s&force=standard",
+                java.net.URLEncoder.encode(cleanPhone, StandardCharsets.UTF_8),
+                java.net.URLEncoder.encode(messageText, StandardCharsets.UTF_8),
+                java.net.URLEncoder.encode(senderId != null ? senderId : "", StandardCharsets.UTF_8));
+
+        try {
+            URL url = new URL(apiUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("Accept", "application/json");
+
+            // Handle Authentication
+            if (apiKey != null && !apiKey.trim().isEmpty()) {
+                if (apiSecret != null && !apiSecret.trim().isEmpty()) {
+                    String auth = apiKey + ":" + apiSecret;
+                    String encodedAuth = java.util.Base64.getEncoder().encodeToString(auth.getBytes());
+                    conn.setRequestProperty("Authorization", "Basic " + encodedAuth);
+                } else if (apiKey.contains(":")) {
+                    String encodedAuth = java.util.Base64.getEncoder().encodeToString(apiKey.getBytes());
+                    conn.setRequestProperty("Authorization", "Basic " + encodedAuth);
+                } else {
+                    conn.setRequestProperty("Authorization", "Bearer " + apiKey);
+                }
+            }
+
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
+
+            try (OutputStream os = conn.getOutputStream()) {
+                byte[] input = urlParameters.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = conn.getResponseCode();
+            if (responseCode >= 200 && responseCode < 300) {
+                logger.infof("SMS sent successfully to %s for user %s", cleanPhone, user.getUsername());
+            } else {
+                // Read error message from the response body to help debugging
+                String errorResponse = "";
+                try (java.util.Scanner s = new java.util.Scanner(conn.getErrorStream(), StandardCharsets.UTF_8)
+                        .useDelimiter("\\A")) {
+                    errorResponse = s.hasNext() ? s.next() : "";
+                } catch (Exception ignored) {
+                }
+
+                logger.errorf("SMS API returned error code %d for user %s. Response: %s",
+                        responseCode, user.getUsername(), errorResponse);
+            }
+            conn.disconnect();
+        } catch (Exception e) {
+            logger.errorf(e, "Failed to send SMS to %s for user %s", phoneNumber, user.getUsername());
+        }
     }
 
     private void sendEmailWithCode(AuthenticationFlowContext context, String code, int ttl) {

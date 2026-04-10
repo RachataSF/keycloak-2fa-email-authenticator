@@ -152,6 +152,66 @@ public final class EmailConstants {
 	 */
 	public static final boolean DEFAULT_ENABLE_FALLBACK = true;
 
+	// SMS Configuration
+
+	/**
+	 * Configuration key for enabling SMS delivery option.
+	 * When enabled, users can choose between email and SMS for receiving codes.
+	 */
+	public static final String SMS_ENABLED = "smsEnabled";
+
+	/**
+	 * Default SMS enabled setting (disabled).
+	 */
+	public static final boolean DEFAULT_SMS_ENABLED = false;
+
+	/**
+	 * Configuration key for the SMS gateway API URL.
+	 * The URL to POST SMS send requests to.
+	 */
+	public static final String SMS_API_URL = "smsApiUrl";
+
+	/**
+	 * Configuration key for the SMS gateway API key.
+	 */
+	public static final String SMS_API_KEY = "smsApiKey";
+
+	/**
+	 * Configuration key for the SMS gateway API secret.
+	 */
+	public static final String SMS_API_SECRET = "smsApiSecret";
+
+	/**
+	 * Configuration key for the SMS sender ID / from number.
+	 */
+	public static final String SMS_SENDER_ID = "smsSenderId";
+
+	/**
+	 * Configuration key for the Keycloak user attribute that stores the phone number.
+	 */
+	public static final String SMS_PHONE_ATTRIBUTE = "smsPhoneAttribute";
+
+	/**
+	 * Default user attribute name for phone number.
+	 */
+	public static final String DEFAULT_SMS_PHONE_ATTRIBUTE = "phoneNumber";
+
+	/**
+	 * Authentication session note key for storing the user's chosen delivery method.
+	 * Values: "email" or "sms"
+	 */
+	public static final String DELIVERY_METHOD = "otpDeliveryMethod";
+
+	/**
+	 * Delivery method value for email.
+	 */
+	public static final String METHOD_EMAIL = "email";
+
+	/**
+	 * Delivery method value for SMS.
+	 */
+	public static final String METHOD_SMS = "sms";
+
 	/**
 	 * Millisecond rounding offset used for converting milliseconds to seconds.
 	 * Adding 999ms before division ensures proper ceiling rounding.

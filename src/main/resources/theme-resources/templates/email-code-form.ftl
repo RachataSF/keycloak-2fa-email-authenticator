@@ -5,6 +5,9 @@
             <#elseif section="form">
                 <#assign hasError=messagesPerField.existsError('emailCode') || (maxAttemptsReached?? &&
                     maxAttemptsReached)>
+                <#assign showMethodSelection=(showMethodSelection?? && showMethodSelection!false)>
+                <#assign smsAvailable=(smsEnabled?? && smsEnabled!false && userHasPhone?? && userHasPhone!false)>
+                <#assign currentMethod=deliveryMethod!'email'>
 
                     <style>
                         /* Custom Corporate Styling */
@@ -187,11 +190,150 @@
                             fill: #0ea5e9 !important;
                             stroke: #0ea5e9 !important;
                         }
+
+                        /* ===== Method Selection Styling ===== */
+                        .method-selection-container {
+                            text-align: center;
+                            padding: 20px 0;
+                        }
+
+                        .method-selection-title {
+                            font-size: 1.2em;
+                            color: #555;
+                            font-weight: bold;
+                            margin-bottom: 25px;
+                        }
+
+                        .method-buttons {
+                            display: flex;
+                            justify-content: center;
+                            gap: 20px;
+                            flex-wrap: wrap;
+                        }
+
+                        .method-btn {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            width: 140px;
+                            height: 130px;
+                            border: 3px solid #bae6fd;
+                            border-radius: 1.5rem;
+                            background: rgba(255, 255, 255, 0.7);
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            text-decoration: none !important;
+                            padding: 15px;
+                        }
+
+                        .method-btn:hover {
+                            border-color: #0ea5e9;
+                            background: rgba(14, 165, 233, 0.08);
+                            transform: translateY(-3px);
+                            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.2);
+                        }
+
+                        .method-btn:active {
+                            transform: translateY(0);
+                        }
+
+                        .method-btn .method-icon {
+                            width: 48px;
+                            height: 48px;
+                            margin-bottom: 8px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+
+                        .method-btn .method-icon svg {
+                            width: 100%;
+                            height: 100%;
+                            fill: #0ea5e9;
+                        }
+
+                        .method-btn:hover .method-icon svg {
+                            fill: #075985;
+                        }
+
+                        .method-btn .method-label {
+                            font-size: 1rem;
+                            font-weight: 600;
+                            color: #555;
+                        }
+
+                        .method-btn .method-info {
+                            font-size: 0.75rem;
+                            color: #999;
+                            margin-top: 3px;
+                        }
+
+                        .method-btn:hover .method-label {
+                            color: #0ea5e9;
+                        }
+
+                        /* SMS icon animation */
+                        @keyframes phoneBuzz {
+                            0%, 100% { transform: rotate(0deg); }
+                            25% { transform: rotate(-5deg); }
+                            75% { transform: rotate(5deg); }
+                        }
+
+                        .sms-icon-anim {
+                            display: inline-block;
+                            width: 50px;
+                            height: 50px;
+                            margin-bottom: 10px;
+                            animation: phoneBuzz 0.5s infinite ease-in-out;
+                        }
+
+                        .sms-icon-anim svg {
+                            width: 100%;
+                            height: 100%;
+                            fill: #0ea5e9;
+                        }
                     </style>
 
-                    <!-- Loading Container (Shown on first load) -->
+                    <!-- ===== Method Selection Container ===== -->
+                    <div id="method-selection-container" class="${properties.kcFormGroupClass!}"
+                        style="display: <#if showMethodSelection>block<#else>none</#if>;">
+                        <div class="method-selection-container">
+                            <p class="method-selection-title">${msg("selectDeliveryMethod")}</p>
+                            <form id="kc-method-select-form" action="${url.loginAction}" method="post">
+                                <input type="hidden" name="deliveryMethod" id="deliveryMethodInput" value="email" />
+                                <input type="hidden" name="selectMethod" value="true" />
+                                <div class="method-buttons">
+                                    <button type="submit" class="method-btn" onclick="document.getElementById('deliveryMethodInput').value='email';">
+                                        <span class="method-icon">
+                                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4.4 20 4ZM20 18H4V8L12 13L20 8V18ZM12 11L4 6H20L12 11Z"/>
+                                            </svg>
+                                        </span>
+                                        <span class="method-label">${msg("sendViaEmail")}</span>
+                                        <#if maskedEmail??>
+                                            <span class="method-info">${maskedEmail}</span>
+                                        </#if>
+                                    </button>
+                                    <button type="submit" class="method-btn" onclick="document.getElementById('deliveryMethodInput').value='sms';">
+                                        <span class="method-icon">
+                                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M17 1.01L7 1C5.9 1 5 1.9 5 3V21C5 22.1 5.9 23 7 23H17C18.1 23 19 22.1 19 21V3C19 1.9 18.1 1.01 17 1.01ZM17 19H7V5H17V19ZM16 7H8V9H16V7ZM16 11H8V13H16V11ZM16 15H8V17H16V15Z"/>
+                                            </svg>
+                                        </span>
+                                        <span class="method-label">${msg("sendViaSms")}</span>
+                                        <#if maskedPhone??>
+                                            <span class="method-info">${maskedPhone}</span>
+                                        </#if>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Loading Container (Shown while sending code) -->
                     <div id="loading-container" class="${properties.kcFormGroupClass!}"
-                        style="display: <#if hasError>none<#else>block</#if>; text-align: center; margin-bottom: 20px; padding: 20px 0;">
+                        style="display: <#if !hasError && !showMethodSelection>block<#else>none</#if>; text-align: center; margin-bottom: 20px; padding: 20px 0;">
                         <style>
                             @keyframes flyEnvelope {
                                 0% {
@@ -217,31 +359,37 @@
 
                             .envelope-icon {
                                 display: inline-block;
-                                font-size: 50px;
+                                width: 50px;
+                                height: 50px;
                                 margin-bottom: 10px;
                                 animation: flyEnvelope 2s infinite ease-in-out;
                             }
+
+                            .envelope-icon svg {
+                                width: 100%;
+                                height: 100%;
+                                fill: #0ea5e9;
+                            }
                         </style>
-                        <div class="envelope-icon">
-                            <svg fill="#1181e8" width="40px" height="40px" viewBox="0 0 35.00 35.00" data-name="Layer 2"
-                                id="ee13b174-13f0-43ea-b921-f168b1054f8d" xmlns="http://www.w3.org/2000/svg"
-                                stroke="#1181e8">
-                                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke="#CCCCCC" stroke-width="0.07"></g>
-                                <g id="SVGRepo_iconCarrier">
-                                    <path
-                                        d="M29.384,30.381H5.615A5.372,5.372,0,0,1,.25,25.015V9.984A5.371,5.371,0,0,1,5.615,4.619H29.384A5.372,5.372,0,0,1,34.75,9.984V25.015A5.372,5.372,0,0,1,29.384,30.381ZM5.615,7.119A2.868,2.868,0,0,0,2.75,9.984V25.015a2.868,2.868,0,0,0,2.865,2.866H29.384a2.869,2.869,0,0,0,2.866-2.866V9.984a2.869,2.869,0,0,0-2.866-2.865Z">
-                                    </path>
-                                    <path
-                                        d="M17.486,20.865a4.664,4.664,0,0,1-2.9-.975L1.218,9.237A1.25,1.25,0,1,1,2.777,7.282L16.141,17.935a2.325,2.325,0,0,0,2.7-.007L32.04,7.287a1.249,1.249,0,1,1,1.569,1.945L20.414,19.873A4.675,4.675,0,0,1,17.486,20.865Z">
-                                    </path>
-                                </g>
-                            </svg>
-                        </div>
-                        <p id="otp-sending-text"
-                            style="font-size: 1.2em; color: #555; font-weight: bold; margin-top: 10px;">Sending access
-                            code.</p>
+
+                        <#if currentMethod == "sms">
+                            <div class="sms-icon-anim">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17 1.01L7 1C5.9 1 5 1.9 5 3V21C5 22.1 5.9 23 7 23H17C18.1 23 19 22.1 19 21V3C19 1.9 18.1 1.01 17 1.01ZM17 19H7V5H17V19ZM16 7H8V9H16V7ZM16 11H8V13H16V11ZM16 15H8V17H16V15Z"/>
+                                </svg>
+                            </div>
+                            <p id="otp-sending-text"
+                                style="font-size: 1.2em; color: #555; font-weight: bold; margin-top: 10px;">${msg("smsSendingText")}.</p>
+                        <#else>
+                            <div class="envelope-icon">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4.4 20 4ZM20 18H4V8L12 13L20 8V18ZM12 11L4 6H20L12 11Z"/>
+                                </svg>
+                            </div>
+                            <p id="otp-sending-text"
+                                style="font-size: 1.2em; color: #555; font-weight: bold; margin-top: 10px;">Sending access
+                                code.</p>
+                        </#if>
                     </div>
 
                     <!-- Bounce Error Container (Hidden by default) -->
@@ -252,7 +400,7 @@
                             Failed to send access code!</span>
                         <span class="${properties.kcInputErrorMessageClass!}"
                             style="color: red; font-size: 1.2em; display: block; margin-bottom: 10px;">
-                            Email address could not be found.
+                            <span id="bounce-error-detail">Email address could not be found.</span>
                         </span>
                         <a href="${url.loginRestartFlowUrl}"
                             class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}"
@@ -311,7 +459,9 @@
 
         <script>
             const userEmail = "${attemptedUserEmail!''}";
-            const hasError = ${ hasError?string('true', 'false')};
+            const hasError = <#if hasError>true<#else>false</#if>;
+            const showMethodSelection = <#if showMethodSelection>true<#else>false</#if>;
+            const deliveryMethod = "${currentMethod}";
             let pollInterval;
             let pollAttempts = 0;
             const maxAttempts = 3; // Wait up to 9 seconds (3 * 3s)
@@ -320,10 +470,11 @@
             (function () {
                 var dots = 1;
                 var el = document.getElementById('otp-sending-text');
+                var baseText = deliveryMethod === 'sms' ? 'Sending access code via SMS' : 'Sending access code';
                 if (el) {
                     setInterval(function () {
                         dots = (dots % 5) + 1;
-                        el.textContent = 'Sending access code' + '.'.repeat(dots);
+                        el.textContent = baseText + '.'.repeat(dots);
                     }, 500);
                 }
             })();
@@ -403,6 +554,14 @@
 
             function checkBounceStatus() {
                 if (!userEmail) return;
+                // Only check bounce for email delivery
+                if (deliveryMethod === 'sms') {
+                    if (pollAttempts >= maxAttempts) {
+                        proceedToOtpForm();
+                    }
+                    pollAttempts++;
+                    return;
+                }
 
                 pollAttempts++;
                 fetch(`https://192.168.10.20/validateEmail/?email=` + encodeURIComponent(userEmail))
@@ -433,9 +592,16 @@
                 startResendCooldown();
             }
 
-            // Only poll if there are no logic errors blocking the initial attempt
-            if (userEmail && !hasError) {
+            // Only poll if not on method selection and no errors
+            if (!showMethodSelection && userEmail && !hasError) {
                 pollInterval = setInterval(checkBounceStatus, 3000);
+            }
+
+            // For SMS, auto-proceed after a shorter delay since no bounce check needed
+            if (!showMethodSelection && deliveryMethod === 'sms' && !hasError) {
+                setTimeout(function() {
+                    proceedToOtpForm();
+                }, 3000);
             }
         </script>
         </#if>

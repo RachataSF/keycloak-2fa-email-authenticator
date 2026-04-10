@@ -32,6 +32,9 @@ A professional Keycloak Authentication Provider implementation for two-factor au
    - <img width="233" height="748" alt="image" src="https://github.com/user-attachments/assets/073a2c74-a18f-48e6-89e9-718df2d6eeec" />
    - set it as default flow (bind flow)
 ---
+## send OTP by sms using thaibulksms service
+- enable sms delivery in Email OTP config
+---
 
 ## 📋 Table of Contents
 

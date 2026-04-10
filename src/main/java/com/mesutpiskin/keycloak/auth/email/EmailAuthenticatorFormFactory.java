@@ -106,7 +106,27 @@ public class EmailAuthenticatorFormFactory implements AuthenticatorFactory {
                         ProviderConfigProperty.STRING_TYPE, String.valueOf(EmailConstants.DEFAULT_RESEND_COOLDOWN)),
                 new ProviderConfigProperty(EmailConstants.MAX_ATTEMPTS, "Max Code Attempts",
                         "The maximum number of invalid code attempts before the code is invalidated and a new one must be requested.",
-                        ProviderConfigProperty.STRING_TYPE, String.valueOf(EmailConstants.DEFAULT_MAX_ATTEMPTS)));
+                        ProviderConfigProperty.STRING_TYPE, String.valueOf(EmailConstants.DEFAULT_MAX_ATTEMPTS)),
+
+                // SMS Configuration
+                new ProviderConfigProperty(EmailConstants.SMS_ENABLED, "Enable SMS Delivery",
+                        "When enabled, users can choose between email and SMS for receiving codes.",
+                        ProviderConfigProperty.BOOLEAN_TYPE, String.valueOf(EmailConstants.DEFAULT_SMS_ENABLED)),
+                new ProviderConfigProperty(EmailConstants.SMS_API_URL, "SMS API URL",
+                        "The HTTP endpoint to POST SMS send requests to. Example: https://api.example.com/sms/send",
+                        ProviderConfigProperty.STRING_TYPE, null),
+                new ProviderConfigProperty(EmailConstants.SMS_API_KEY, "SMS API Key",
+                        "API key for authenticating with the SMS gateway.",
+                        ProviderConfigProperty.PASSWORD, null),
+                new ProviderConfigProperty(EmailConstants.SMS_API_SECRET, "SMS API Secret",
+                        "API secret for authenticating with the SMS gateway (used by ThaiBulkSMS).",
+                        ProviderConfigProperty.PASSWORD, null),
+                new ProviderConfigProperty(EmailConstants.SMS_SENDER_ID, "SMS Sender ID",
+                        "The sender ID or phone number for outgoing SMS messages.",
+                        ProviderConfigProperty.STRING_TYPE, null),
+                new ProviderConfigProperty(EmailConstants.SMS_PHONE_ATTRIBUTE, "User Phone Attribute",
+                        "The Keycloak user attribute that stores the phone number (default: phoneNumber).",
+                        ProviderConfigProperty.STRING_TYPE, EmailConstants.DEFAULT_SMS_PHONE_ATTRIBUTE));
     }
 
     @Override
