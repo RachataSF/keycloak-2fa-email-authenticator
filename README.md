@@ -34,6 +34,10 @@ A professional Keycloak Authentication Provider implementation for two-factor au
 ---
 ## send OTP by sms using thaibulksms service
 - enable sms delivery in Email OTP config
+- <img width="699" height="807" alt="image" src="https://github.com/user-attachments/assets/0183c3b8-72c0-46e9-bade-4a792919393a" />
+- buy credit in  <a href="https://www.thaibulksms.com">thaibulksms</a>
+- setup sms api
+
 ---
 
 ## 📋 Table of Contents
