@@ -455,7 +455,7 @@
                                 <div id="bounce-error-container" class="${properties.kcFormGroupClass!}"
                                     style="display: none; text-align: center; margin-bottom: 20px;">
                                     <span class="${properties.kcInputErrorMessageClass!}"
-                                        style="color: red; font-weight: bold; font-size: 1.5em; display: block; margin-bottom: 5px;">
+                                        style="color: #e53935 !important; font-weight: bold !important; font-size: 1.25rem !important; display: block; margin-bottom: 10px;">
                                         Failed to send access code!</span>
                                     <span class="${properties.kcInputErrorMessageClass!}"
                                         style="color: red; font-size: 1.2em; display: block; margin-bottom: 10px;">
