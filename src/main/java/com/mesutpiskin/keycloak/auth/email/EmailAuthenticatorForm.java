@@ -320,7 +320,7 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
 
         if (codeContext.expiresAt() < System.currentTimeMillis()) {
             context.getEvent().user(user).error(Errors.EXPIRED_CODE);
-            Response challengeResponse = challenge(context, Messages.EXPIRED_ACTION_TOKEN_SESSION_EXISTS,
+            Response challengeResponse = challenge(context, "email-authenticator-code-expired",
                     EmailConstants.CODE);
             context.failureChallenge(AuthenticationFlowError.EXPIRED_CODE, challengeResponse);
             return false;
