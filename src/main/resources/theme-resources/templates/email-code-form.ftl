@@ -388,7 +388,7 @@
 
                                 <!-- Loading Container (Shown while sending code) -->
                                 <div id="loading-container" class="${properties.kcFormGroupClass!}"
-                                    style="display: <#if !hasError && !showMethodSelection>block<#else>none</#if>; text-align: center; margin-bottom: 20px; padding: 20px 0;">
+                                    style="display: <#if !hasError && !showMethodSelection && !(missingEmail?? && missingEmail)>block<#else>none</#if>; text-align: center; margin-bottom: 20px; padding: 20px 0;">
                                     <style>
                                         @keyframes flyEnvelope {
                                             0% {
@@ -453,7 +453,7 @@
 
                                 <!-- Bounce Error Container (Hidden by default) -->
                                 <div id="bounce-error-container" class="${properties.kcFormGroupClass!}"
-                                    style="display: none; text-align: center; margin-bottom: 20px;">
+                                    style="display: <#if missingEmail?? && missingEmail>block<#else>none</#if>; text-align: center; margin-bottom: 20px;">
                                     <span class="${properties.kcInputErrorMessageClass!}"
                                         style="color: #e53935 !important; font-weight: bold !important; font-size: 1.25rem !important; display: block; margin-bottom: 10px;">
                                         Failed to send access code!</span>
@@ -470,12 +470,15 @@
 
                                 <form id="kc-otp-login-form" class="${properties.kcFormClass!}"
                                     action="${url.loginAction}" method="post"
-                                    style="display: <#if hasError>block<#else>none</#if>;">
+                                    style="display: <#if hasError && !(missingEmail?? && missingEmail)>block<#else>none</#if>;">
 
                                     <div class="${properties.kcFormGroupClass!}">
                                         <div class="${properties.kcLabelWrapperClass!}">
-                                            <label for="emailCode"
-                                                class="${properties.kcLabelClass!}">${msg("emailOtpForm")}</label>
+                                            <label for="emailCode" class="${properties.kcLabelClass!}">
+                                                <#if deliveryMethod?? && deliveryMethod=="sms">${msg("smsOtpForm")}
+                                                    <#else>${msg("emailOtpForm")}
+                                                </#if>
+                                            </label>
                                         </div>
 
                                         <div class="${properties.kcInputWrapperClass!}">

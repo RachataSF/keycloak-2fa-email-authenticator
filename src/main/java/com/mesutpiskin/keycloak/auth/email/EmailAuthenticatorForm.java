@@ -90,6 +90,14 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
         String userPhone = getUserPhone(user, phoneAttribute);
         boolean userHasPhone = userPhone != null && !userPhone.trim().isEmpty();
 
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+            LoginFormsProvider form = context.form().setExecution(context.getExecution().getId());
+            form.setAttribute("missingEmail", true);
+            form.setAttribute("showMethodSelection", false);
+            context.challenge(form.createForm("email-code-form.ftl"));
+            return;
+        }
+
         if (smsEnabled && userHasPhone) {
             // Show method selection screen
             LoginFormsProvider form = context.form().setExecution(context.getExecution().getId());
@@ -428,10 +436,10 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator
 
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
-        // Always return true as long as the user has an email address in their profile.
-        // This tells Keycloak "Yes, they are already set up!" and completely bypasses
-        // the Enable screen.
-        return user.getEmail() != null && !user.getEmail().trim().isEmpty();
+        // Always return true so that the authenticate() method runs.
+        // If the user lacks an email, authenticate() will handle asking for it.
+        return true;
+        // return user.getEmail() != null && !user.getEmail().trim().isEmpty();
     }
 
     @Override
